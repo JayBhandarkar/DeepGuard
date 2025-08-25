@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DeepGuard Scan</title>
+    <style>
+        body { background: #0f0f0f; color: white; font-family: monospace; }
+        .video-box { width: 640px; height: 480px; border: 2px solid #00ff41; margin: 20px; }
+        button { background: #00ff41; color: black; padding: 10px 20px; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>DeepGuard - Webcam Analysis</h1>
+    <button onclick="startCamera()">Start Webcam</button>
+    <button onclick="stopCamera()">Stop Webcam</button>
+    <br><br>
+    <video id="webcam" class="video-box" autoplay muted></video>
+    <div id="confidence">Confidence: --</div>
+    
+    <script>
+        let stream = null;
+        
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(s => {
+                    stream = s;
+                    document.getElementById('webcam').srcObject = s;
+                    
+                    // Start fake analysis
+                    setInterval(() => {
+                        const conf = Math.floor(Math.random() * 100);
+                        document.getElementById('confidence').textContent = `Confidence: ${conf}%`;
+                    }, 2000);
+                })
+                .catch(err => alert('Camera error: ' + err));
+        }
+        
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                document.getElementById('webcam').srcObject = null;
+                document.getElementById('confidence').textContent = 'Confidence: --';
+            }
+        }
+    </script>
+</body>
+</html>

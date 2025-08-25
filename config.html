@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepGuard Config - AI Model Configuration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f0f0f;
+            --bg-card: #1c1c1c;
+            --accent: #00ff41;
+            --accent-blue: #0099ff;
+            --accent-red: #ff0040;
+            --accent-yellow: #ffaa00;
+            --text: #ffffff;
+            --text-dim: #888888;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: var(--bg-dark);
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            padding-top: 80px;
+        }
+        
+        /* Matrix background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            z-index: -1;
+        }
+        
+        /* Navbar */
+        .navbar {
+            background: rgba(15, 15, 15, 0.95);
+            border-bottom: 2px solid var(--accent-red);
+            padding: 1rem 0;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: var(--accent) !important;
+            text-shadow: 0 0 10px var(--accent);
+        }
+        
+        .nav-link {
+            color: var(--text-dim) !important;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            padding: 0.5rem 1rem !important;
+            margin: 0 0.5rem;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent) !important;
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        }
+        
+        /* Config Container */
+        .config-container {
+            padding: 2rem 0;
+        }
+        
+        .config-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .config-title {
+            font-size: 2.5rem;
+            color: var(--accent);
+            text-shadow: 0 0 20px var(--accent);
+            margin-bottom: 1rem;
+        }
+        
+        .config-subtitle {
+            color: var(--text-dim);
+            font-size: 1.1rem;
+        }
+        
+        /* Config Cards */
+        .config-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .config-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        
+        .config-card-header {
+            background: rgba(0, 255, 65, 0.05);
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+            border-radius: 12px 12px 0 0;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .config-card-title {
+            color: var(--accent);
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .config-card-body {
+            padding: 2rem;
+        }
+        
+        /* Model Cards */
+        .model-card {
+            background: rgba(0, 153, 255, 0.03);
+            border: 1px solid rgba(0, 153, 255, 0.3);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .model-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        }
+        
+        .model-card.selected {
+            border-color: var(--accent);
+            background: rgba(0, 255, 65, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.4);
+        }
+        
+        .model-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-blue);
+            margin-bottom: 0.5rem;
+        }
+        
+        .model-card.selected .model-name {
+            color: var(--accent);
+        }
+        
+        .model-description {
+            color: var(--text-dim);
+            margin-bottom: 1rem;
+        }
+        
+        .model-stats {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+        
+        .model-stat {
+            text-align: center;
+            position: relative;
+        }
+        
+        /* Circular Progress */
+        .circular-progress {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: conic-gradient(var(--accent-blue) 0deg, var(--accent-blue) var(--progress, 0deg), rgba(255,255,255,0.1) var(--progress, 0deg));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        .model-card.selected .circular-progress {
+            background: conic-gradient(var(--accent) 0deg, var(--accent) var(--progress, 0deg), rgba(255,255,255,0.1) var(--progress, 0deg));
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.4);
+        }
+        
+        .circular-progress::before {
+            content: '';
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            position: absolute;
+        }
+        
+        .model-stat-value {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--accent-blue);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .model-card.selected .model-stat-value {
+            color: var(--accent);
+        }
+        
+        .model-stat-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+        
+        /* Speed indicator */
+        .speed-indicator {
+            width: 80px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 40px 40px 0 0;
+            position: relative;
+            margin: 0 auto 0.5rem;
+            overflow: hidden;
+        }
+        
+        .speed-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-red), var(--accent-yellow), var(--accent));
+            border-radius: 40px 40px 0 0;
+            transition: width 0.5s ease;
+        }
+        
+        .model-card.selected .speed-bar {
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        }
+        
+        .speed-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--text);
+            z-index: 1;
+        }
+        
+        /* Sliders */
+        .slider-container {
+            margin: 1.5rem 0;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .slider-value {
+            color: var(--accent);
+            font-weight: bold;
+            background: rgba(0, 255, 65, 0.1);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .custom-range {
+            background: transparent;
+            height: 6px;
+        }
+        
+        .custom-range::-webkit-slider-track {
+            background: var(--text-dim);
+            height: 6px;
+            border-radius: 3px;
+        }
+        
+        .custom-range::-webkit-slider-thumb {
+            background: var(--accent);
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--bg-dark);
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+        }
+        
+        /* Toggle Switches */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--text-dim);
+            transition: 0.4s;
+            border-radius: 30px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: var(--accent);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+        
+        /* Buttons */
+        .btn-terminal {
+            background: transparent;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            padding: 0.8rem 2rem;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin: 0.5rem;
+        }
+        
+        .btn-terminal:hover {
+            background: var(--accent);
+            color: var(--bg-dark);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+        }
+        
+        .btn-danger {
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+        
+        .btn-danger:hover {
+            background: var(--accent-red);
+            color: var(--text);
+            box-shadow: 0 0 20px rgba(255, 0, 64, 0.5);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .config-title { font-size: 2rem; }
+            .model-stats { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i data-feather="terminal" class="me-2"></i>
+                DeepGuard v2.1
+            </a>
+            
+            <div class="navbar-nav ms-auto d-flex flex-row">
+                <a class="nav-link" href="scan.html">
+                    <i data-feather="search" class="me-1"></i>
+                    Scan
+                </a>
+                <a class="nav-link" href="logs.html">
+                    <i data-feather="database" class="me-1"></i>
+                    Logs
+                </a>
+                <a class="nav-link active" href="config.html">
+                    <i data-feather="settings" class="me-1"></i>
+                    Config
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Config Container -->
+    <div class="config-container">
+        <div class="container">
+            <!-- Header -->
+            <div class="config-header">
+                <h1 class="config-title">
+                    <i data-feather="settings" class="me-3"></i>
+                    AI Model Configuration
+                </h1>
+                <p class="config-subtitle">
+                    Configure detection models, sensitivity settings, and system parameters
+                </p>
+            </div>
+
+            <!-- Model Selection -->
+            <div class="config-card">
+                <div class="config-card-header">
+                    <h3 class="config-card-title">
+                        <i data-feather="cpu" class="me-2"></i>
+                        Detection Models
+                    </h3>
+                </div>
+                <div class="config-card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="model-card selected" data-model="ensemble">
+                                <div class="model-name">Ensemble Model v2.1</div>
+                                <div class="model-description">Combined XceptionNet + FacialForensics++ for maximum accuracy</div>
+                                <div class="model-stats">
+                                    <div class="model-stat">
+                                        <div class="circular-progress" style="--progress: 350deg;">
+                                            <div class="model-stat-value">97.3%</div>
+                                        </div>
+                                        <div class="model-stat-label">Accuracy</div>
+                                    </div>
+                                    <div class="model-stat">
+                                        <div class="speed-indicator">
+                                            <div class="speed-bar" style="width: 90%;"></div>
+                                            <div class="speed-value">2.1s</div>
+                                        </div>
+                                        <div class="model-stat-label">Speed</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="model-card" data-model="xception">
+                                <div class="model-name">XceptionNet Only</div>
+                                <div class="model-description">Single model mode - faster but lower accuracy</div>
+                                <div class="model-stats">
+                                    <div class="model-stat">
+                                        <div class="circular-progress" style="--progress: 339deg;">
+                                            <div class="model-stat-value">94.2%</div>
+                                        </div>
+                                        <div class="model-stat-label">Accuracy</div>
+                                    </div>
+                                    <div class="model-stat">
+                                        <div class="speed-indicator">
+                                            <div class="speed-bar" style="width: 95%;"></div>
+                                            <div class="speed-value">0.3s</div>
+                                        </div>
+                                        <div class="model-stat-label">Speed</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sensitivity Settings -->
+            <div class="config-card">
+                <div class="config-card-header">
+                    <h3 class="config-card-title">
+                        <i data-feather="sliders" class="me-2"></i>
+                        Detection Sensitivity
+                    </h3>
+                </div>
+                <div class="config-card-body">
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Confidence Threshold</span>
+                            <span class="slider-value" id="confidenceValue">75%</span>
+                        </div>
+                        <input type="range" class="form-range custom-range" min="50" max="95" value="75" id="confidenceSlider">
+                        <small class="text-muted">Recommended: 75% for balanced detection</small>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>False Positive Tolerance</span>
+                            <span class="slider-value" id="fpValue">Low</span>
+                        </div>
+                        <input type="range" class="form-range custom-range" min="1" max="3" value="1" id="fpSlider">
+                        <small class="text-muted">Low: Security applications | Medium: Content moderation | High: Preliminary screening</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Settings -->
+            <div class="config-card">
+                <div class="config-card-header">
+                    <h3 class="config-card-title">
+                        <i data-feather="toggle-left" class="me-2"></i>
+                        System Settings
+                    </h3>
+                </div>
+                <div class="config-card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span>Real-time Monitoring</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span>Auto-quarantine Threats</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span>Detailed Logging</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span>Email Notifications</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center mt-4">
+                <button class="btn-terminal" onclick="saveConfig()">
+                    <i data-feather="save" class="me-2"></i>
+                    Save Configuration
+                </button>
+                <button class="btn-terminal btn-danger" onclick="resetConfig()">
+                    <i data-feather="refresh-cw" class="me-2"></i>
+                    Reset to Defaults
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize Feather Icons
+        feather.replace();
+        
+        // Model selection
+        document.querySelectorAll('.model-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+            });
+        });
+        
+        // Slider updates
+        const confidenceSlider = document.getElementById('confidenceSlider');
+        const confidenceValue = document.getElementById('confidenceValue');
+        confidenceSlider.addEventListener('input', () => {
+            confidenceValue.textContent = confidenceSlider.value + '%';
+        });
+        
+        const fpSlider = document.getElementById('fpSlider');
+        const fpValue = document.getElementById('fpValue');
+        const fpLabels = ['Low', 'Medium', 'High'];
+        fpSlider.addEventListener('input', () => {
+            fpValue.textContent = fpLabels[fpSlider.value - 1];
+        });
+        
+        // Save configuration
+        function saveConfig() {
+            const selectedModel = document.querySelector('.model-card.selected').dataset.model;
+            const confidence = confidenceSlider.value;
+            const fpTolerance = fpLabels[fpSlider.value - 1];
+            
+            alert(`Configuration Saved!\nModel: ${selectedModel}\nConfidence: ${confidence}%\nFP Tolerance: ${fpTolerance}`);
+        }
+        
+        // Reset configuration
+        function resetConfig() {
+            if (confirm('Reset all settings to defaults?')) {
+                confidenceSlider.value = 75;
+                confidenceValue.textContent = '75%';
+                fpSlider.value = 1;
+                fpValue.textContent = 'Low';
+                
+                document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
+                document.querySelector('[data-model="ensemble"]').classList.add('selected');
+                
+                alert('Configuration reset to defaults!');
+            }
+        }
+    </script>
+</body>
+</html>

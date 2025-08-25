@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Webcam Test</title>
+</head>
+<body>
+    <h1>Simple Webcam Test</h1>
+    <button onclick="startCam()">Start Camera</button>
+    <br><br>
+    <video id="video" width="640" height="480" autoplay></video>
+    
+    <script>
+        function startCam() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    document.getElementById('video').srcObject = stream;
+                    alert('Camera started!');
+                })
+                .catch(err => {
+                    alert('Camera error: ' + err.message);
+                });
+        }
+    </script>
+</body>
+</html>

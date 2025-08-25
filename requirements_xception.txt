@@ -1,0 +1,23 @@
+# Xception Model Dependencies for DeepGuard
+# These are additional dependencies needed for the Xception-based deepfake detection
+
+# Core PyTorch dependencies (already in main requirements)
+# torch>=2.8.0
+# torchvision>=0.23.0
+
+# Additional dependencies for Xception model
+Pillow>=9.0.0
+numpy>=1.21.0
+opencv-python>=4.5.0
+
+# Optional: dlib for improved face detection
+# dlib>=19.24.0
+
+# Optional: scikit-image for additional image processing
+scikit-image>=0.19.0
+
+# Optional: tqdm for progress bars
+tqdm>=4.60.0
+
+# Note: Most dependencies are already included in the main pyproject.toml
+# This file lists additional dependencies that might be needed for optimal performance

@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis History - Deepfake Detector{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Header -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">Analysis History</h2>
+                    <p class="text-muted mb-0">Previous deepfake detection results</p>
+                </div>
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i data-feather="upload" class="me-1"></i>
+                    New Analysis
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- History List -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            {% if analyses.items %}
+                {% for analysis in analyses.items %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <!-- File Info -->
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3">
+                                        {% if analysis.file_type == 'video' %}
+                                            <i data-feather="video" class="text-primary"></i>
+                                        {% elif analysis.file_type == 'audio' %}
+                                            <i data-feather="headphones" class="text-info"></i>
+                                        {% else %}
+                                            <i data-feather="image" class="text-success"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">{{ analysis.filename }}</h6>
+                                        <div class="text-muted small">
+                                            <span class="badge bg-secondary me-2">{{ analysis.file_type.title() }}</span>
+                                            {% if analysis.duration %}
+                                                {{ "%.1f"|format(analysis.duration) }}s
+                                            {% endif %}
+                                            • {{ "%.1f"|format(analysis.file_size / 1024 / 1024) }} MB
+                                            • {{ analysis.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Confidence Score -->
+                            <div class="col-md-3 text-center">
+                                {% set risk_level = "high" if analysis.confidence_score >= 70 else ("medium" if analysis.confidence_score >= 30 else "low") %}
+                                {% set badge_class = "danger" if risk_level == "high" else ("warning" if risk_level == "medium" else "success") %}
+                                
+                                <div class="mb-1">
+                                    <span class="h5 mb-0">{{ "%.1f"|format(analysis.confidence_score) }}%</span>
+                                </div>
+                                <div>
+                                    <span class="badge bg-{{ badge_class }}">
+                                        {% if analysis.confidence_score >= 80 %}
+                                            Likely Fake
+                                        {% elif analysis.confidence_score >= 60 %}
+                                            Probably Fake
+                                        {% elif analysis.confidence_score >= 40 %}
+                                            Uncertain
+                                        {% elif analysis.confidence_score >= 20 %}
+                                            Probably Real
+                                        {% else %}
+                                            Likely Real
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="col-md-3 text-end">
+                                <a href="{{ url_for('results', analysis_id=analysis.id) }}" class="btn btn-outline-primary btn-sm">
+                                    <i data-feather="eye" class="me-1"></i>
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Quick Stats -->
+                        {% if analysis.video_score is not none or analysis.audio_score is not none or analysis.image_score is not none %}
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="progress-stacked" style="height: 6px;">
+                                    {% if analysis.video_score is not none %}
+                                        <div class="progress" role="progressbar" style="width: 33.33%">
+                                            <div class="progress-bar bg-primary" style="width: {{ analysis.video_score }}%"></div>
+                                        </div>
+                                    {% endif %}
+                                    {% if analysis.audio_score is not none %}
+                                        <div class="progress" role="progressbar" style="width: 33.33%">
+                                            <div class="progress-bar bg-info" style="width: {{ analysis.audio_score }}%"></div>
+                                        </div>
+                                    {% endif %}
+                                    {% if analysis.image_score is not none %}
+                                        <div class="progress" role="progressbar" style="width: 33.33%">
+                                            <div class="progress-bar bg-success" style="width: {{ analysis.image_score }}%"></div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="row mt-1">
+                                    {% if analysis.video_score is not none %}
+                                    <div class="col-4">
+                                        <small class="text-muted">
+                                            <i data-feather="video" size="12" class="me-1"></i>
+                                            Video: {{ "%.1f"|format(analysis.video_score) }}%
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                    {% if analysis.audio_score is not none %}
+                                    <div class="col-4">
+                                        <small class="text-muted">
+                                            <i data-feather="headphones" size="12" class="me-1"></i>
+                                            Audio: {{ "%.1f"|format(analysis.audio_score) }}%
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                    {% if analysis.image_score is not none %}
+                                    <div class="col-4">
+                                        <small class="text-muted">
+                                            <i data-feather="image" size="12" class="me-1"></i>
+                                            Image: {{ "%.1f"|format(analysis.image_score) }}%
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Pagination -->
+                {% if analyses.pages > 1 %}
+                <nav aria-label="Analysis history pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if analyses.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('history', page=analyses.prev_num) }}">
+                                    <i data-feather="chevron-left" size="16"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for page_num in analyses.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num != analyses.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('history', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if analyses.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('history', page=analyses.next_num) }}">
+                                    <i data-feather="chevron-right" size="16"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+
+            {% else %}
+                <!-- Empty State -->
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i data-feather="clock" size="64" class="text-muted mb-3"></i>
+                        <h5 class="text-muted mb-3">No Analysis History</h5>
+                        <p class="text-muted mb-4">
+                            You haven't analyzed any files yet. Upload your first file to get started.
+                        </p>
+                        <a href="{{ url_for('index') }}" class="btn btn-primary">
+                            <i data-feather="upload" class="me-1"></i>
+                            Upload First File
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    {% if analyses.items %}
+    <div class="row justify-content-center mt-5">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i data-feather="bar-chart-2" class="me-2"></i>
+                        Analysis Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-2">
+                            <div class="h4 mb-1">{{ analyses.total }}</div>
+                            <div class="text-muted small">Total Analyses</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="h4 mb-1">
+                                {{ analyses.items | selectattr('file_type', 'equalto', 'video') | list | length }}
+                            </div>
+                            <div class="text-muted small">Video Files</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="h4 mb-1">
+                                {{ analyses.items | selectattr('file_type', 'equalto', 'audio') | list | length }}
+                            </div>
+                            <div class="text-muted small">Audio Files</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="h4 mb-1">
+                                {{ analyses.items | selectattr('file_type', 'equalto', 'image') | list | length }}
+                            </div>
+                            <div class="text-muted small">Image Files</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="h4 mb-1">
+                                {{ analyses.items | selectattr('confidence_score', 'ge', 70) | list | length }}
+                            </div>
+                            <div class="text-muted small">High Risk Detections</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="h4 mb-1">
+                                {{ analyses.items | selectattr('confidence_score', 'le', 30) | list | length }}
+                            </div>
+                            <div class="text-muted small">Low Risk Files</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize feather icons
+    feather.replace();
+</script>
+{% endblock %}

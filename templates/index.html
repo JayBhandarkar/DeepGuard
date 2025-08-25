@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Upload File - Deepfake Detector{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Hero Section -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8 text-center">
+            <h1 class="display-4 mb-3">
+                <i data-feather="shield" class="me-3"></i>
+                Deepfake Detection
+            </h1>
+            <p class="lead text-muted">
+                Upload video or audio files to analyze for potential deepfake content using 
+                advanced computer vision and audio analysis techniques.
+            </p>
+        </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i data-feather="upload-cloud" class="me-2"></i>
+                        File Upload
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="uploadForm" method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
+                        <!-- File Drop Zone -->
+                        <div id="dropZone" class="border border-2 border-dashed rounded-3 p-5 text-center mb-4">
+                            <div id="dropZoneContent">
+                                <i data-feather="upload" size="48" class="text-muted mb-3"></i>
+                                <h5 class="text-muted">Drag and drop your file here</h5>
+                                <p class="text-muted mb-3">or</p>
+                                <button type="button" class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                                    Choose File
+                                </button>
+                                <input type="file" id="fileInput" name="file" accept=".mp4,.avi,.mov,.mkv,.wav,.mp3,.m4a,.flac,.jpg,.jpeg,.png,.bmp,.tiff,.webp" hidden>
+                            </div>
+                            
+                            <!-- Upload Progress -->
+                            <div id="uploadProgress" style="display: none;">
+                                <div class="progress mb-3">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <p class="text-muted">Uploading and analyzing file...</p>
+                            </div>
+                        </div>
+
+                        <!-- File Info -->
+                        <div id="fileInfo" style="display: none;" class="mb-4">
+                            <div class="card bg-secondary">
+                                <div class="card-body">
+                                    <h6 class="card-title">Selected File</h6>
+                                    <div class="d-flex align-items-center">
+                                        <i data-feather="file" class="me-2"></i>
+                                        <div>
+                                            <div id="fileName" class="fw-bold"></div>
+                                            <div id="fileDetails" class="text-muted small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" id="submitBtn" class="btn btn-primary btn-lg" disabled>
+                                <i data-feather="zap" class="me-2"></i>
+                                Analyze for Deepfakes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supported Formats -->
+    <div class="row justify-content-center mt-4">
+        <div class="col-lg-8">
+            <div class="card border-0 bg-transparent">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-3">Supported Formats</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <i data-feather="video" class="me-2 text-primary"></i>
+                                <span class="fw-bold">Video Files</span>
+                            </div>
+                            <p class="text-muted small">MP4, AVI, MOV, MKV</p>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <i data-feather="volume-2" class="me-2 text-info"></i>
+                                <span class="fw-bold">Audio Files</span>
+                            </div>
+                            <p class="text-muted small">WAV, MP3, M4A, FLAC</p>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <i data-feather="image" class="me-2 text-success"></i>
+                                <span class="fw-bold">Image Files</span>
+                            </div>
+                            <p class="text-muted small">JPG, PNG, BMP, TIFF, WEBP</p>
+                        </div>
+                    </div>
+                    <p class="text-muted small mt-3">
+                        <i data-feather="info" class="me-1"></i>
+                        Maximum file size: 100MB
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="row justify-content-center mt-5">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i data-feather="help-circle" class="me-2"></i>
+                        How It Works
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center mb-3">
+                            <i data-feather="eye" size="32" class="text-primary mb-2"></i>
+                            <h6>Video Analysis</h6>
+                            <p class="text-muted small">
+                                Analyzes facial landmarks, frame consistency, and visual artifacts 
+                                using computer vision techniques.
+                            </p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <i data-feather="headphones" size="32" class="text-info mb-2"></i>
+                            <h6>Audio Analysis</h6>
+                            <p class="text-muted small">
+                                Examines spectral patterns, frequency anomalies, and audio 
+                                characteristics for artificial generation indicators.
+                            </p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <i data-feather="image" size="32" class="text-success mb-2"></i>
+                            <h6>Image Analysis</h6>
+                            <p class="text-muted small">
+                                Detects face manipulation, compression artifacts, and pixel-level 
+                                inconsistencies in photos and images.
+                            </p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <i data-feather="trending-up" size="32" class="text-warning mb-2"></i>
+                            <h6>Confidence Scoring</h6>
+                            <p class="text-muted small">
+                                Combines multiple analysis methods to provide a confidence 
+                                score indicating deepfake probability.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

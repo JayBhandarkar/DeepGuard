@@ -1,0 +1,472 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Results - Deepfake Detector{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Results Header -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-10">
+            <div class="d-flex align-items-center mb-3">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary me-3">
+                    <i data-feather="arrow-left" class="me-1"></i>
+                    Back to Upload
+                </a>
+                <div>
+                    <h2 class="mb-1">Analysis Results</h2>
+                    <p class="text-muted mb-0">{{ analysis.filename }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Results -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-body text-center p-5">
+                    <!-- Confidence Score Display -->
+                    <div class="mb-4">
+                        <div class="position-relative d-inline-block">
+                            <canvas id="confidenceChart" width="200" height="200"></canvas>
+                            <div class="position-absolute top-50 start-50 translate-middle">
+                                <h2 class="mb-0 fw-bold">{{ "%.1f"|format(analysis.confidence_score) }}%</h2>
+                                <small class="text-muted">Fake Probability</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Verdict -->
+                    <div class="mb-4">
+                        {% set risk_level = "high" if analysis.confidence_score >= 70 else ("medium" if analysis.confidence_score >= 30 else "low") %}
+                        {% set verdict_text = "Likely Fake" if analysis.confidence_score >= 80 else ("Probably Fake" if analysis.confidence_score >= 60 else ("Uncertain" if analysis.confidence_score >= 40 else ("Probably Real" if analysis.confidence_score >= 20 else "Likely Real"))) %}
+                        {% set badge_class = "danger" if risk_level == "high" else ("warning" if risk_level == "medium" else "success") %}
+                        
+                        <h4 class="mb-2">
+                            <span class="badge bg-{{ badge_class }} fs-6">{{ verdict_text }}</span>
+                        </h4>
+                        <p class="text-muted">
+                            Confidence Level: 
+                            <span class="fw-bold">
+                                {{ "High" if analysis.confidence_score >= 70 else ("Medium" if analysis.confidence_score >= 30 else "Low") }}
+                            </span>
+                        </p>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <i data-feather="file" class="text-muted mb-1"></i>
+                                <div class="small text-muted">File Type</div>
+                                <div class="fw-bold">{{ analysis.file_type.title() }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <i data-feather="clock" class="text-muted mb-1"></i>
+                                <div class="small text-muted">Duration</div>
+                                <div class="fw-bold">
+                                    {% if analysis.duration %}
+                                        {{ "%.1f"|format(analysis.duration) }}s
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <i data-feather="hard-drive" class="text-muted mb-1"></i>
+                                <div class="small text-muted">File Size</div>
+                                <div class="fw-bold">{{ "%.1f"|format(analysis.file_size / 1024 / 1024) }} MB</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <i data-feather="zap" class="text-muted mb-1"></i>
+                                <div class="small text-muted">Processing Time</div>
+                                <div class="fw-bold">{{ "%.1f"|format(analysis.processing_time) }}s</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Analysis -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="row">
+                <!-- Video Analysis -->
+                {% if analysis.video_score is not none %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i data-feather="video" class="me-2 text-primary"></i>
+                                Video Analysis
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small">Overall Video Score</span>
+                                    <span class="fw-bold">{{ "%.1f"|format(analysis.video_score) }}%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-primary" style="width: {{ analysis.video_score }}%"></div>
+                                </div>
+                            </div>
+
+                            {% if analysis.face_consistency_score is not none %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small">Face Consistency</span>
+                                    <span class="fw-bold">{{ "%.1f"|format(analysis.face_consistency_score * 100) }}%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" style="width: {{ analysis.face_consistency_score * 100 }}%"></div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if analysis.frame_artifacts_score is not none %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small">Frame Artifacts</span>
+                                    <span class="fw-bold">{{ "%.1f"|format(analysis.frame_artifacts_score * 100) }}%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" style="width: {{ analysis.frame_artifacts_score * 100 }}%"></div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Audio Analysis -->
+                {% if analysis.audio_score is not none %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i data-feather="headphones" class="me-2 text-info"></i>
+                                Audio Analysis
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small">Overall Audio Score</span>
+                                    <span class="fw-bold">{{ "%.1f"|format(analysis.audio_score) }}%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" style="width: {{ analysis.audio_score }}%"></div>
+                                </div>
+                            </div>
+
+                            {% if analysis.spectral_anomaly_score is not none %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small">Spectral Anomalies</span>
+                                    <span class="fw-bold">{{ "%.1f"|format(analysis.spectral_anomaly_score * 100) }}%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" style="width: {{ analysis.spectral_anomaly_score * 100 }}%"></div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if analysis.frequency_pattern_score is not none %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small">Frequency Patterns</span>
+                                    <span class="fw-bold">{{ "%.1f"|format(analysis.frequency_pattern_score * 100) }}%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-danger" style="width: {{ analysis.frequency_pattern_score * 100 }}%"></div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Image Analysis -->
+                {% if analysis.image_score is not none %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i data-feather="image" class="me-2 text-success"></i>
+                                Image Analysis
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small">Overall Image Score</span>
+                                    <span class="fw-bold">{{ "%.1f"|format(analysis.image_score) }}%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" style="width: {{ analysis.image_score }}%"></div>
+                                </div>
+                            </div>
+
+                            {% if analysis.face_analysis_score is not none %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small">Face Analysis</span>
+                                    <span class="fw-bold">{{ "%.1f"|format(analysis.face_analysis_score * 100) }}%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-primary" style="width: {{ analysis.face_analysis_score * 100 }}%"></div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if analysis.compression_artifacts_score is not none %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small">Compression Artifacts</span>
+                                    <span class="fw-bold">{{ "%.1f"|format(analysis.compression_artifacts_score * 100) }}%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" style="width: {{ analysis.compression_artifacts_score * 100 }}%"></div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if analysis.pixel_inconsistency_score is not none %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small">Pixel Inconsistencies</span>
+                                    <span class="fw-bold">{{ "%.1f"|format(analysis.pixel_inconsistency_score * 100) }}%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-danger" style="width: {{ analysis.pixel_inconsistency_score * 100 }}%"></div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- FaceForensics++ Analysis -->
+                {% if analysis.faceforensics_score is not none and analysis.faceforensics_score > 0 %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i data-feather="cpu" class="me-2 text-warning"></i>
+                                FaceForensics++ Analysis
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small">XceptionNet Score</span>
+                                    <span class="fw-bold">{{ "%.1f"|format(analysis.faceforensics_score) }}%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" style="width: {{ analysis.faceforensics_score }}%"></div>
+                                </div>
+                            </div>
+                            <div class="text-muted small">
+                                <p class="mb-1">
+                                    <i data-feather="info" class="me-1" size="14"></i>
+                                    Based on the FaceForensics++ dataset
+                                </p>
+                                <p class="mb-0">
+                                    Uses XceptionNet architecture trained on Deepfakes, Face2Face, FaceSwap, and NeuralTextures
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Analysis Summary -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i data-feather="info" class="me-2"></i>
+                        Analysis Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Key Findings:</h6>
+                            <ul class="list-unstyled">
+                                {% if analysis.confidence_score >= 70 %}
+                                <li class="mb-1">
+                                    <i data-feather="alert-triangle" class="text-danger me-1" size="16"></i>
+                                    High probability of artificial generation detected
+                                </li>
+                                {% elif analysis.confidence_score >= 30 %}
+                                <li class="mb-1">
+                                    <i data-feather="alert-circle" class="text-warning me-1" size="16"></i>
+                                    Some suspicious patterns detected
+                                </li>
+                                {% else %}
+                                <li class="mb-1">
+                                    <i data-feather="check-circle" class="text-success me-1" size="16"></i>
+                                    Low probability of artificial generation
+                                </li>
+                                {% endif %}
+
+                                {% if analysis.video_score is not none and analysis.video_score > 50 %}
+                                <li class="mb-1">
+                                    <i data-feather="eye" class="text-primary me-1" size="16"></i>
+                                    Visual inconsistencies detected in video
+                                </li>
+                                {% endif %}
+
+                                {% if analysis.audio_score is not none and analysis.audio_score > 50 %}
+                                <li class="mb-1">
+                                    <i data-feather="volume-2" class="text-info me-1" size="16"></i>
+                                    Audio anomalies detected in spectral analysis
+                                </li>
+                                {% endif %}
+
+                                {% if analysis.image_score is not none and analysis.image_score > 50 %}
+                                <li class="mb-1">
+                                    <i data-feather="image" class="text-success me-1" size="16"></i>
+                                    Image manipulation indicators detected
+                                </li>
+                                {% endif %}
+
+                                {% if analysis.faceforensics_score is not none and analysis.faceforensics_score > 50 %}
+                                <li class="mb-1">
+                                    <i data-feather="cpu" class="text-warning me-1" size="16"></i>
+                                    FaceForensics++ neural network detected deepfake patterns
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Recommendations:</h6>
+                            <ul class="list-unstyled">
+                                {% if analysis.confidence_score >= 70 %}
+                                <li class="mb-1">
+                                    <i data-feather="shield" class="text-danger me-1" size="16"></i>
+                                    Exercise caution - likely artificially generated
+                                </li>
+                                <li class="mb-1">
+                                    <i data-feather="search" class="text-warning me-1" size="16"></i>
+                                    Consider additional verification methods
+                                </li>
+                                {% elif analysis.confidence_score >= 30 %}
+                                <li class="mb-1">
+                                    <i data-feather="eye" class="text-warning me-1" size="16"></i>
+                                    Manual review recommended
+                                </li>
+                                <li class="mb-1">
+                                    <i data-feather="users" class="text-info me-1" size="16"></i>
+                                    Seek expert opinion if critical
+                                </li>
+                                {% else %}
+                                <li class="mb-1">
+                                    <i data-feather="check" class="text-success me-1" size="16"></i>
+                                    Appears to be authentic content
+                                </li>
+                                <li class="mb-1">
+                                    <i data-feather="info" class="text-muted me-1" size="16"></i>
+                                    Continue with normal verification practices
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card mt-4">
+                <div class="card-body text-center">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                                <i data-feather="upload" class="me-1"></i>
+                                Analyze Another File
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="{{ url_for('history') }}" class="btn btn-outline-secondary">
+                                <i data-feather="clock" class="me-1"></i>
+                                View History
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-info" onclick="shareResults()">
+                                <i data-feather="share-2" class="me-1"></i>
+                                Share Results
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Create confidence score chart
+    const ctx = document.getElementById('confidenceChart').getContext('2d');
+    const score = {{ analysis.confidence_score }};
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [score, 100 - score],
+                backgroundColor: [
+                    score >= 70 ? '#dc3545' : (score >= 30 ? '#ffc107' : '#198754'),
+                    '#6c757d'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: false,
+            maintainAspectRatio: false,
+            cutout: '75%',
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    enabled: false
+                }
+            }
+        }
+    });
+
+    function shareResults() {
+        const text = `Deepfake Analysis Results: ${{{ analysis.confidence_score }}}% fake probability for {{ analysis.filename }}`;
+        if (navigator.share) {
+            navigator.share({
+                title: 'Deepfake Analysis Results',
+                text: text,
+                url: window.location.href
+            });
+        } else if (navigator.clipboard) {
+            navigator.clipboard.writeText(text + ' - ' + window.location.href);
+            alert('Results copied to clipboard!');
+        }
+    }
+
+    // Initialize feather icons
+    feather.replace();
+</script>
+{% endblock %}
